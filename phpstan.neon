@@ -1,0 +1,8 @@
+parameters:
+    level: 0
+    paths:
+        - src/LoanService.php
+    scanFiles:
+        - src/Database.php
+        - src/BookRepository.php
+        - src/helpers.php
