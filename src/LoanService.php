@@ -10,210 +10,210 @@ class LoanService
      * Возвращает ['ok' => bool, 'message' => string, 'due_at' => date, 'warnings' => []]
      */
     public static function issue($readerEmail, $inventoryNumber, $librarianId)
-{
-    $reader = Database::fetchOne(
-        'SELECT * FROM users WHERE email = ?',
-        [$readerEmail]
-    );
-
-    $error = self::checkReader($reader);
-    if ($error !== null) {
-        return $error;
-    }
-
-    $copy = Database::fetchOne(
-        'SELECT * FROM copies WHERE inventory_number = ?',
-        [$inventoryNumber]
-    );
-
-    $error = self::checkCopy($copy);
-    if ($error !== null) {
-        return $error;
-    }
-
-    $error = self::checkLoanLimit($reader);
-    if ($error !== null) {
-        return $error;
-    }
-
-    $warnings = [];
-    $error = self::checkOverdue($reader, $warnings);
-    if ($error !== null) {
-        return $error;
-    }
-
-    $reservationResult = self::checkReservations($reader, $copy);
-    if ($reservationResult['error'] !== null) {
-        return $reservationResult['error'];
-    }
-
-    $dueAt = self::calculateDueDate($reader);
-
-    Database::insert(
-        'INSERT INTO loans (copy_id, user_id, librarian_id, issued_at, due_at) VALUES (?, ?, ?, ?, ?)',
-        [$copy['id'], $reader['id'], $librarianId, date('Y-m-d'), $dueAt]
-    );
-
-    Database::execute("UPDATE copies SET status = 'issued' WHERE id = ?", [$copy['id']]);
-
-    if ($reservationResult['reservation']) {
-        Database::execute(
-            "UPDATE reservations SET status = 'done' WHERE id = ?",
-            [$reservationResult['reservation']['id']]
+    {
+        $reader = Database::fetchOne(
+            'SELECT * FROM users WHERE email = ?',
+            [$readerEmail]
         );
-    }
 
-    return [
-        'ok' => true,
-        'message' => 'Книга выдана до ' . format_date($dueAt),
-        'due_at' => $dueAt,
-        'warnings' => $warnings,
-    ];
-}
+        $error = self::checkReader($reader);
+        if ($error !== null) {
+            return $error;
+        }
+
+        $copy = Database::fetchOne(
+            'SELECT * FROM copies WHERE inventory_number = ?',
+            [$inventoryNumber]
+        );
+
+        $error = self::checkCopy($copy);
+        if ($error !== null) {
+            return $error;
+        }
+
+        $error = self::checkLoanLimit($reader);
+        if ($error !== null) {
+            return $error;
+        }
+
+        $warnings = [];
+        $error = self::checkOverdue($reader, $warnings);
+        if ($error !== null) {
+            return $error;
+        }
+
+        $reservationResult = self::checkReservations($reader, $copy);
+        if ($reservationResult['error'] !== null) {
+            return $reservationResult['error'];
+        }
+
+        $dueAt = self::calculateDueDate($reader);
+
+        Database::insert(
+            'INSERT INTO loans (copy_id, user_id, librarian_id, issued_at, due_at) VALUES (?, ?, ?, ?, ?)',
+            [$copy['id'], $reader['id'], $librarianId, date('Y-m-d'), $dueAt]
+        );
+
+        Database::execute("UPDATE copies SET status = 'issued' WHERE id = ?", [$copy['id']]);
+
+        if ($reservationResult['reservation']) {
+            Database::execute(
+                "UPDATE reservations SET status = 'done' WHERE id = ?",
+                [$reservationResult['reservation']['id']]
+            );
+        }
+
+        return [
+            'ok' => true,
+            'message' => 'Книга выдана до ' . format_date($dueAt),
+            'due_at' => $dueAt,
+            'warnings' => $warnings,
+        ];
+    }
 
     /**
      * Принять книгу обратно, начислить штраф за просрочку.
      */
     private static function checkReader($reader)
-{
-    if (!$reader) {
-        return ['ok' => false, 'message' => 'Читатель не найден'];
-    }
-
-    if ($reader['is_blocked'] == 1) {
-        return ['ok' => false, 'message' => 'Читатель заблокирован'];
-    }
-
-    return null;
-}
-
-private static function checkCopy($copy)
-{
-    if (!$copy) {
-        return ['ok' => false, 'message' => 'Экземпляр не найден'];
-    }
-
-    if ($copy['status'] != 'available') {
-        if ($copy['status'] == 'issued') {
-            return ['ok' => false, 'message' => 'Экземпляр уже выдан'];
-        } elseif ($copy['status'] == 'repair') {
-            return ['ok' => false, 'message' => 'Экземпляр на ремонте'];
-        } else {
-            return ['ok' => false, 'message' => 'Экземпляр списан или утерян'];
+    {
+        if (!$reader) {
+            return ['ok' => false, 'message' => 'Читатель не найден'];
         }
+
+        if ($reader['is_blocked'] == 1) {
+            return ['ok' => false, 'message' => 'Читатель заблокирован'];
+        }
+
+        return null;
     }
 
-    return null;
-}
+    private static function checkCopy($copy)
+    {
+        if (!$copy) {
+            return ['ok' => false, 'message' => 'Экземпляр не найден'];
+        }
 
-private static function checkLoanLimit($reader)
-{
-    $active = Database::fetchOne(
-        'SELECT COUNT(*) AS cnt FROM loans WHERE user_id = ? AND returned_at IS NULL',
-        [$reader['id']]
-    );
+        if ($copy['status'] != 'available') {
+            if ($copy['status'] == 'issued') {
+                return ['ok' => false, 'message' => 'Экземпляр уже выдан'];
+            } elseif ($copy['status'] == 'repair') {
+                return ['ok' => false, 'message' => 'Экземпляр на ремонте'];
+            } else {
+                return ['ok' => false, 'message' => 'Экземпляр списан или утерян'];
+            }
+        }
 
-    if ($reader['category'] == 'student') {
-        $limit = MAX_BOOKS_STUDENT;
-    } else {
-        $limit = MAX_BOOKS_TEACHER;
+        return null;
     }
 
-    if ($active['cnt'] > $limit) {
+    private static function checkLoanLimit($reader)
+    {
+        $active = Database::fetchOne(
+            'SELECT COUNT(*) AS cnt FROM loans WHERE user_id = ? AND returned_at IS NULL',
+            [$reader['id']]
+        );
+
+        if ($reader['category'] == 'student') {
+            $limit = MAX_BOOKS_STUDENT;
+        } else {
+            $limit = MAX_BOOKS_TEACHER;
+        }
+
+        if ($active['cnt'] > $limit) {
+            return [
+                'ok' => false,
+                'message' => 'Превышен лимит книг на руках (' . $limit . ')'
+            ];
+        }
+
+        return null;
+    }
+
+    private static function checkOverdue($reader, &$warnings)
+    {
+        $overdue = Database::fetchOne(
+            'SELECT COUNT(*) AS cnt FROM loans WHERE user_id = ? AND returned_at IS NULL AND due_at < ?',
+            [$reader['id'], date('Y-m-d')]
+        );
+
+        if ($overdue['cnt'] > 0) {
+            if ($reader['category'] == 'student') {
+                return [
+                    'ok' => false,
+                    'message' => 'У читателя есть просроченные книги'
+                ];
+            } else {
+                $warnings[] = 'У читателя есть просроченные книги (' .
+                    $overdue['cnt'] . ')';
+            }
+        }
+
+        return null;
+    }
+
+    private static function checkReservations($reader, $copy)
+    {
+        $reservations = Database::fetchAll(
+            "SELECT * FROM reservations WHERE book_id = ? AND status = 'active' ORDER BY created_at",
+            [$copy['book_id']]
+        );
+
+        $ownReservation = null;
+        $othersBefore = 0;
+
+        foreach ($reservations as $reservation) {
+            if ($reservation['user_id'] == $reader['id']) {
+                $ownReservation = $reservation;
+                break;
+            }
+
+            $othersBefore++;
+        }
+
+        if ($othersBefore > 0) {
+            $available = BookRepository::availableCount($copy['book_id']);
+
+            if ($available <= $othersBefore) {
+                return [
+                    'error' => [
+                        'ok' => false,
+                        'message' => 'Все свободные экземпляры забронированы другими читателями'
+                    ],
+                    'reservation' => null
+                ];
+            }
+        }
+
         return [
-            'ok' => false,
-            'message' => 'Превышен лимит книг на руках (' . $limit . ')'
+            'error' => null,
+            'reservation' => $ownReservation
         ];
     }
 
-    return null;
-}
-
-private static function checkOverdue($reader, &$warnings)
-{
-    $overdue = Database::fetchOne(
-        'SELECT COUNT(*) AS cnt FROM loans WHERE user_id = ? AND returned_at IS NULL AND due_at < ?',
-        [$reader['id'], date('Y-m-d')]
-    );
-
-    if ($overdue['cnt'] > 0) {
+    private static function calculateDueDate($reader)
+    {
         if ($reader['category'] == 'student') {
-            return [
-                'ok' => false,
-                'message' => 'У читателя есть просроченные книги'
-            ];
+            $days = LOAN_DAYS_STUDENT;
+            $month = (int)date('n');
+
+            if ($month >= 6 && $month <= 8) {
+                $days = $days * 2;
+            }
         } else {
-            $warnings[] = 'У читателя есть просроченные книги (' .
-                $overdue['cnt'] . ')';
-        }
-    }
-
-    return null;
-}
-
-private static function checkReservations($reader, $copy)
-{
-    $reservations = Database::fetchAll(
-        "SELECT * FROM reservations WHERE book_id = ? AND status = 'active' ORDER BY created_at",
-        [$copy['book_id']]
-    );
-
-    $ownReservation = null;
-    $othersBefore = 0;
-
-    foreach ($reservations as $reservation) {
-        if ($reservation['user_id'] == $reader['id']) {
-            $ownReservation = $reservation;
-            break;
+            $days = LOAN_DAYS_TEACHER;
         }
 
-        $othersBefore++;
-    }
+        $due = strtotime('+' . $days . ' days');
+        $weekday = (int)date('w', $due);
 
-    if ($othersBefore > 0) {
-        $available = BookRepository::availableCount($copy['book_id']);
-
-        if ($available <= $othersBefore) {
-            return [
-                'error' => [
-                    'ok' => false,
-                    'message' => 'Все свободные экземпляры забронированы другими читателями'
-                ],
-                'reservation' => null
-            ];
+        if ($weekday == 0) {
+            $due = strtotime('+1 day', $due);
+        } elseif ($weekday == 6) {
+            $due = strtotime('+2 days', $due);
         }
+
+        return date('Y-m-d', $due);
     }
-
-    return [
-        'error' => null,
-        'reservation' => $ownReservation
-    ];
-}
-
-private static function calculateDueDate($reader)
-{
-    if ($reader['category'] == 'student') {
-        $days = LOAN_DAYS_STUDENT;
-        $month = (int)date('n');
-
-        if ($month >= 6 && $month <= 8) {
-            $days = $days * 2;
-        }
-    } else {
-        $days = LOAN_DAYS_TEACHER;
-    }
-
-    $due = strtotime('+' . $days . ' days');
-    $weekday = (int)date('w', $due);
-
-    if ($weekday == 0) {
-        $due = strtotime('+1 day', $due);
-    } elseif ($weekday == 6) {
-        $due = strtotime('+2 days', $due);
-    }
-
-    return date('Y-m-d', $due);
-}
     public static function returnBook($loanId)
     {
         $loan = Database::fetchOne(
