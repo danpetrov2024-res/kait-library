@@ -1,6 +1,6 @@
 <div class="auth-box">
     <h1>Вход</h1>
-    <?php if ($error): ?>
+    <?php if ($error) : ?>
         <div class="alert alert-error"><?= e($error) ?></div>
     <?php endif; ?>
     <form method="post" action="index.php?page=login">

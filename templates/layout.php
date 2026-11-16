@@ -11,20 +11,20 @@
     <a class="logo" href="index.php">📚 <?= e(APP_NAME) ?></a>
     <nav>
         <a href="index.php?page=catalog">Каталог</a>
-        <?php if ($user): ?>
+        <?php if ($user) : ?>
             <a href="index.php?page=profile">Мои книги</a>
-            <?php if (in_array($user['role'], ['librarian', 'admin'])): ?>
+            <?php if (in_array($user['role'], ['librarian', 'admin'])) : ?>
                 <a href="index.php?page=librarian">Выдача</a>
                 <a href="index.php?page=reservations">Бронирования</a>
                 <a href="index.php?page=debtors">Должники</a>
                 <a href="index.php?page=admin_books">Книги</a>
             <?php endif; ?>
-            <?php if ($user['role'] === 'admin'): ?>
+            <?php if ($user['role'] === 'admin') : ?>
                 <a href="index.php?page=admin_users">Пользователи</a>
             <?php endif; ?>
             <span class="user-name"><?= e($user['full_name']) ?></span>
             <a href="index.php?page=logout" class="btn btn-light">Выйти</a>
-        <?php else: ?>
+        <?php else : ?>
             <a href="index.php?page=login" class="btn btn-light">Войти</a>
             <a href="index.php?page=register" class="btn">Регистрация</a>
         <?php endif; ?>
@@ -32,7 +32,7 @@
 </header>
 
 <main class="container">
-    <?php if ($msg = flash()): ?>
+    <?php if ($msg = flash()) : ?>
         <div class="alert alert-success"><?= e($msg) ?></div>
     <?php endif; ?>
     <?= $content ?>
@@ -48,7 +48,7 @@
     };
 </script>
 <script src="assets/js/api.js"></script>
-<?php foreach (($scripts ?? []) as $s): ?>
+<?php foreach (($scripts ?? []) as $s) : ?>
 <script src="assets/js/<?= $s ?>.js"></script>
 <?php endforeach; ?>
 </body>

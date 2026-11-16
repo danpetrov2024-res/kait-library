@@ -1,6 +1,6 @@
 <?php $scripts = ['admin']; ?>
 <h1>Книги</h1>
-<?php if ($message): ?>
+<?php if ($message) : ?>
     <div class="alert alert-success"><?= e($message) ?></div>
 <?php endif; ?>
 
@@ -12,7 +12,7 @@
         <label>Жанр
             <select name="genre_id">
                 <option value="">—</option>
-                <?php foreach ($genres as $g): ?>
+                <?php foreach ($genres as $g) : ?>
                     <option value="<?= $g['id'] ?>"><?= e($g['name']) ?></option>
                 <?php endforeach; ?>
             </select>
@@ -30,7 +30,7 @@
     <table class="table">
         <thead><tr><th>Название</th><th>Автор</th><th>Жанр</th><th>В наличии</th><th>Обложка</th></tr></thead>
         <tbody>
-        <?php foreach ($books as $b): ?>
+        <?php foreach ($books as $b) : ?>
             <tr data-book-id="<?= $b['id'] ?>">
                 <td><a href="index.php?page=book&id=<?= $b['id'] ?>"><?= e($b['title']) ?></a></td>
                 <td><?= e($b['author']) ?></td>

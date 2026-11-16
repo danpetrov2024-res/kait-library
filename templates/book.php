@@ -1,9 +1,9 @@
 <?php $scripts = ['book']; ?>
 <div class="book-page" data-book-id="<?= $book['id'] ?>">
     <div class="book-cover">
-        <?php if ($book['cover']): ?>
+        <?php if ($book['cover']) : ?>
             <img src="uploads/<?= e($book['cover']) ?>" alt="Обложка">
-        <?php else: ?>
+        <?php else : ?>
             <div class="cover-placeholder"><?= e(mb_substr($book['title'], 0, 1)) ?></div>
         <?php endif; ?>
     </div>
@@ -19,10 +19,10 @@
         </table>
         <p><?= nl2br(e($book['description'])) ?></p>
 
-        <?php if ($user): ?>
+        <?php if ($user) : ?>
             <button id="reserve-btn" class="btn">Забронировать</button>
             <span id="reserve-msg" class="muted"></span>
-        <?php else: ?>
+        <?php else : ?>
             <p class="muted"><a href="index.php?page=login">Войдите</a>, чтобы забронировать книгу или оставить отзыв.</p>
         <?php endif; ?>
     </div>
@@ -30,7 +30,7 @@
 
 <section class="reviews">
     <h2>Отзывы</h2>
-    <?php if ($user): ?>
+    <?php if ($user) : ?>
         <form id="review-form" class="review-form">
             <label>Оценка
                 <select name="rating" id="rating">

@@ -26,7 +26,7 @@
         <tr><th>Читатель</th><th>Книга</th><th>Инв. номер</th><th>Выдана</th><th>Вернуть до</th><th></th></tr>
         </thead>
         <tbody>
-        <?php foreach ($loans as $l): ?>
+        <?php foreach ($loans as $l) : ?>
             <?php $late = strtotime($l['due_at']) < time(); ?>
             <tr class="<?= $late ? 'row-late' : '' ?>" data-loan-id="<?= $l['id'] ?>">
                 <td><?= e($l['full_name']) ?><br><span class="muted"><?= e($l['email']) ?></span></td>
