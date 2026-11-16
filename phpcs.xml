@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 <ruleset name="KAIT Library">
-    <description>PHP coding standards for KAIT Library</description>
+    <description>
+        PSR-12 coding standards for KAIT Library
+    </description>
 
     <file>src</file>
     <file>public</file>
@@ -9,5 +11,8 @@
 
     <arg name="extensions" value="php"/>
 
-    <rule ref="PSR12"/>
+    <rule ref="PSR12">
+        <exclude name="PSR1.Classes.ClassDeclaration.MissingNamespace"/>
+        <exclude name="PSR1.Files.SideEffects.FoundWithSymbols"/>
+    </rule>
 </ruleset>
