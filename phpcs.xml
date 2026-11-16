@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<ruleset name="KAIT Library">
+    <description>PHP coding standards for KAIT Library</description>
+
+    <file>src</file>
+    <file>public</file>
+    <file>templates</file>
+    <file>config</file>
+
+    <arg name="extensions" value="php"/>
+
+    <rule ref="PSR12"/>
+</ruleset>
