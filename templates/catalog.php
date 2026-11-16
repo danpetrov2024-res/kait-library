@@ -5,7 +5,7 @@
     <input type="text" name="q" id="q" placeholder="Название или автор" maxlength="100">
     <select name="genre" id="genre">
         <option value="">Все жанры</option>
-        <?php foreach ($genres as $g): ?>
+        <?php foreach ($genres as $g) : ?>
             <option value="<?= $g['id'] ?>"><?= e($g['name']) ?></option>
         <?php endforeach; ?>
     </select>
